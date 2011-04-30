@@ -1,7 +1,3 @@
-
-//var examples = ["Mon-Fri 09:00-18:00","Mon-Fri 09:00-18:00, Sat 09:30-19:00","Mon-Tue 09:00-18:00, Wed 09:30-12:00, Fri-Sat 10:00-16:00",
-//"Sat-Sun 9:00-12:00 13:00-17:00", "Sat-Sun: 9:00-12:00, 13:00-17:00, Tue-Thu 9:30 - 23:00"];
-
 String.prototype.trim = function () {
     return this.replace(/^\s*(\S*(\s+\S+)*)\s*$/, "$1");
 };
@@ -43,6 +39,31 @@ function isOpenNow(dt) {
     return false;
 }
 
+function stringifyToTwoPlaces(n) {
+	if(n<10) return "0"+n;
+	else return n.toString();
+}
+
+function makeTime(h,m) {
+	return stringifyToTwoPlaces(h)+":"+stringifyToTwoPlaces(m);
+}
+
+function nextClose(dt) {
+    d=dt.getDay();
+    h=dt.getHours();
+    m=dt.getMinutes();
+    if(this.isDayInRange(d)) {
+        var i;
+        for(i=0;i<this.times.length;i++) {
+            tr=this.times[i];
+            if((tr.bh==h && tr.bm <= m) ||
+               (tr.eh==h && tr.em >= m) ||
+               (tr.bh < h && tr.eh > h)) return makeTime(tr.eh,tr.em);
+        }
+    }
+	return "Closed"; 	
+}
+
 function DateRange(stringrange) {
     this.times=new Array();
 
@@ -52,6 +73,7 @@ function DateRange(stringrange) {
         DateRange.prototype.dayToNum = dayToNum;
         DateRange.prototype.addTimeRange = addTimeRange;
         DateRange.prototype.isOpenNow = isOpenNow;
+        DateRange.prototype.nextClose = nextClose;
     }
     if (stringrange.indexOf("-") == -1) {
         this.begin=dayToNum(stringrange.trim());
@@ -142,9 +164,7 @@ function parseLine(ln) {
     return drs;
 }
 
-function checkOpeningHours(str) {
-    var dt=new Date();
-    var i = 0;
+function checkOpeningHours(dt,str) {
     var z=parseLine(str);
     if(z) {
         var j=0;
@@ -153,3 +173,21 @@ function checkOpeningHours(str) {
         }
     }
 }
+
+function showClosedOrClosing(dt,str) {
+	    var z=parseLine(str);
+	if(z) {
+        var j=0;
+        for(j=0;j<z.length;j++) {
+            if(z[j].isOpenNow(dt)) return "Open. Closes at " + z[j].nextClose(dt);
+        }
+		return "Closed";
+	} else {
+		return "Unknown";
+	}
+}
+
+//node.js exports
+
+exports.checkOpeningHours = checkOpeningHours;
+exports.showClosedOrClosing = showClosedOrClosing;
