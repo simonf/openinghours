@@ -1,0 +1,1 @@
+﻿Javascript to parse strings of the general form <dayname-range> <time-range> and decide if the current day/time falls within the stated range.
